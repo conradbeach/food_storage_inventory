@@ -7,8 +7,6 @@ require "active_job/railtie"
 require "active_record/railtie"
 require "active_storage/engine"
 require "action_controller/railtie"
-require "action_mailer/railtie"
-require "action_mailbox/engine"
 require "action_text/engine"
 require "action_view/railtie"
 require "action_cable/engine"
@@ -42,5 +40,8 @@ module FoodStorageInventory
     # Mission Control requires signing in through ApplicationController instead of HTTP basic auth.
     config.mission_control.jobs.base_controller_class = "ApplicationController"
     config.mission_control.jobs.http_basic_auth_enabled = false
+
+    # Madmin requires Active Storage, but nothing here has attachments to resize.
+    config.active_storage.variant_processor = :disabled
   end
 end
