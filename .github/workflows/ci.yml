@@ -89,8 +89,10 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
-      - name: Build assets
-        run: bin/rails tailwindcss:build
+      - name: Prepare database and assets
+        env:
+          RAILS_ENV: test
+        run: bin/rails db:test:prepare tailwindcss:build
 
       - name: Run tests
         env:

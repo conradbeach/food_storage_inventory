@@ -15,4 +15,8 @@ class ItemResource < Madmin::Resource
   end
 
   def self.display_name(record) = record.name
+
+  def self.default_sort_column = "expires_on"
+
+  def self.default_sort_direction = "asc"
 end

@@ -27,7 +27,7 @@ class PushSubscription < ApplicationRecord
       endpoint:,
       p256dh: p256dh_key,
       auth: auth_key,
-      vapid: Rails.configuration.x.vapid,
+      vapid: Rails.application.credentials.vapid,
     )
     true
   rescue WebPush::ExpiredSubscription, WebPush::InvalidSubscription

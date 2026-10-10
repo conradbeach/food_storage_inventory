@@ -29,6 +29,15 @@ RSpec.describe "Admin dashboard" do
       expect(summary_section).to include("<td>3 lbs</td>", "<td>0.25</td>", "<td>9</td>", "<td>5</td>", "$42.90")
     end
 
+    it "lists other things to buy" do
+      create(:shopping_list_item, name: "Propane", notes: "Two 20 lb tanks")
+
+      get madmin_root_path
+
+      shopping_section = response.body[%r{<section id="shopping-list">.*?</section>}m]
+      expect(shopping_section).to include("Propane", "Two 20 lb tanks")
+    end
+
     context "when nothing is expiring soon" do
       it "says so" do
         create(:item, expires_on: 10.years.from_now)
@@ -41,7 +50,8 @@ RSpec.describe "Admin dashboard" do
 
     context "when push notifications are configured" do
       it "offers to enable notifications" do
-        allow(Rails.configuration.x).to receive(:vapid).and_return(public_key: "public-key")
+        allow(Rails.application.credentials).to receive(:dig).and_call_original
+        allow(Rails.application.credentials).to receive(:dig).with(:vapid, :public_key).and_return("public-key")
 
         get madmin_root_path
 
@@ -51,7 +61,8 @@ RSpec.describe "Admin dashboard" do
 
     context "when push notifications are not configured" do
       it "does not offer notifications" do
-        allow(Rails.configuration.x).to receive(:vapid).and_return(public_key: nil)
+        allow(Rails.application.credentials).to receive(:dig).and_call_original
+        allow(Rails.application.credentials).to receive(:dig).with(:vapid, :public_key).and_return(nil)
 
         get madmin_root_path
 

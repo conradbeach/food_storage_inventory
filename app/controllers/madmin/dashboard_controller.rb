@@ -5,5 +5,6 @@ class Madmin::DashboardController < Madmin::ApplicationController
     @expiring_items = Item.expiring_soon.includes(:food)
     @household_size = Person.household_size
     @foods = Food.includes(:items).order(:name)
+    @shopping_list_items = ShoppingListItem.order(:name)
   end
 end

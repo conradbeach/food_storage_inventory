@@ -5,7 +5,8 @@ Rails app with a [Madmin](https://github.com/excid3/madmin) admin interface:
 
 - **Dashboard** (`/madmin`): items expiring in the next 4 months (including
   anything already expired) and the spreadsheet's supply summary — years
-  supplied per food, how much more is needed for a year, and the shopping cost.
+  supplied per food, how much more is needed for a year, and the shopping cost —
+  plus a free-text list of other things to buy (propane, first aid supplies…).
 - **Foods** are the Summary sheet's rows (Wheat, Legumes, Vitamin C…), with a
   yearly per-person target and package size/price for the shopping list.
   **Items** are the stored containers or lots counted toward a food.
@@ -35,13 +36,8 @@ User.create!(email_address: "me@example.com", password: "a long password")
 Users can then add other users and reset passwords under **Users** in the admin.
 There is no emailed password reset.
 
-To try push notifications locally, generate VAPID keys and export them before
-starting the server:
-
-```sh
-bin/rails runner 'k = WebPush.generate_key; puts "export VAPID_PUBLIC_KEY=#{k.public_key} VAPID_PRIVATE_KEY=#{k.private_key}"'
-export VAPID_SUBJECT=mailto:me@example.com
-```
+Push notification (VAPID) keys live in Rails credentials, so they work locally
+whenever `config/master.key` is present.
 
 ### Importing the spreadsheet
 
@@ -62,14 +58,41 @@ month/year dates ("8/27") as the first of the month, so they're flagged early;
 (model, request, job, and Playwright system specs). GitHub Actions runs the same
 checks.
 
+## Credentials
+
+Settings that shouldn't be in this public repository live in Rails credentials
+(`bin/rails credentials:edit`):
+
+```yaml
+vapid:            # push notification keys; changing them breaks every phone's subscription
+  subject: https://home-server.example.ts.net
+  public_key: ...
+  private_key: ...
+deploy:
+  server: home-server                      # SSH host for Kamal
+  ssh_user: conrad
+  host: home-server.example.ts.net         # the app's Tailscale HTTPS name
+litestream:       # optional until backups are set up (see Backups)
+  host: backup-machine.example.ts.net:22
+  user: litestream
+  path: /path/to/backups/food_storage_inventory
+  host_key: ssh-ed25519 AAAA...
+  ssh_private_key: |
+    -----BEGIN OPENSSH PRIVATE KEY-----
+    ...
+```
+
+Kamal reads them through `.kamal/credentials.rb` when it renders
+`config/deploy.yml` and the Litestream config, without booting Rails.
+
 ## Deployment
 
 The app deploys with [Kamal](https://kamal-deploy.org) to the home server, which
-is only reachable over Tailscale. Because the server runs other services:
+is only reachable over Tailscale:
 
-- kamal-proxy listens on `127.0.0.1:8380`, not ports 80/443. kamal-proxy is
-  shared by every Kamal app on a server, so if another Kamal app already runs
-  there, check its proxy ports before booting.
+- kamal-proxy listens on `127.0.0.1:8380`, not ports 80/443, so it doesn't
+  collide with other services. kamal-proxy is shared by every Kamal app on a
+  server; if another Kamal app is added there, keep their proxy settings in sync.
 - [Tailscale Serve](https://tailscale.com/kb/1242/tailscale-serve) provides
   HTTPS with a `*.ts.net` certificate. HTTPS is required for installing the PWA
   and for push notifications.
@@ -78,28 +101,20 @@ is only reachable over Tailscale. Because the server runs other services:
 
 ### First deploy
 
-1. Replace the `HOME_SERVER`, `TAILNET`, and `BACKUP_*` placeholders in
-   `config/deploy.yml`. Kamal connects over SSH as `root` by default; add an
-   `ssh: user:` entry if you deploy as a different user who can run Docker.
-2. Enable HTTPS certificates for the tailnet (Tailscale admin console → DNS),
+1. Enable HTTPS certificates for the tailnet (Tailscale admin console → DNS),
    then on the home server:
    ```sh
    sudo tailscale serve --bg --https=443 http://127.0.0.1:8380
    ```
-   If port 443 on the server's Tailscale address is already taken, use another
-   port (e.g. `--https=8443`) and visit `https://HOME_SERVER.TAILNET.ts.net:8443`.
-3. Generate VAPID keys (see Development), store them in your password manager,
-   and export `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` in the shell you deploy
-   from. Keep them stable; new keys invalidate every phone's subscription.
-4. Set up backups (below), then deploy and create a user:
+2. Deploy and create a user:
    ```sh
    bin/kamal setup
    bin/kamal console   # User.create!(email_address: ..., password: ...)
    ```
-5. Import the spreadsheet into production:
+3. Import the spreadsheet into production:
    ```sh
-   scp -r path/to/csv_directory HOME_SERVER:/tmp/inventory_export
-   ssh HOME_SERVER 'docker cp /tmp/inventory_export $(docker ps -q -f label=service=food_storage_inventory -f label=role=web):/rails/tmp/'
+   scp -r path/to/csv_directory home-server:/tmp/inventory_export
+   ssh home-server 'docker cp /tmp/inventory_export $(docker ps -q -f label=service=food_storage_inventory -f label=role=web):/rails/tmp/'
    bin/kamal app exec --reuse 'bin/rails "inventory:import[/rails/tmp/inventory_export]"'
    ```
 
@@ -110,7 +125,7 @@ After that, `bin/kamal deploy` deploys new versions.
 iOS only allows push notifications for web apps added to the Home Screen
 (iOS 16.4 or later):
 
-1. Open the app's `https://HOME_SERVER.TAILNET.ts.net` URL in Safari and sign in.
+1. Open the app's `https://home-server.<tailnet>.ts.net` URL in Safari and sign in.
 2. Share → **Add to Home Screen**.
 3. Open Food Storage from the Home Screen and tap **Notify me about expiring
    items** on the dashboard.
@@ -121,24 +136,31 @@ next day.
 
 ## Backups
 
-[Litestream](https://litestream.io) runs as a Kamal accessory and continuously
-replicates `storage/production.sqlite3` over SFTP to another machine on the
-tailnet. It takes a snapshot daily and keeps 30 days of history
-(`config/litestream.yml`). The cache, queue, and cable databases aren't backed
-up because their data is disposable.
+[Litestream](https://litestream.io) runs as a Kamal accessory next to the app.
+It continuously copies changes to `storage/production.sqlite3` over SFTP to
+another machine on the tailnet, takes a full snapshot daily, and keeps 30 days
+of history (`config/litestream/litestream.yml.erb`), so the database can be
+restored to any point in that window. The cache, queue, and cable databases
+aren't backed up because their data is disposable. The accessory is only
+configured once the `litestream` credentials exist.
 
 Setup:
 
-1. On the backup machine, create a user and a backup directory, and add an
-   ed25519 public key to that user's `authorized_keys`.
-2. On the home server, put the matching private key at
-   `/etc/food_storage_inventory/litestream/id_ed25519` (readable only by root).
-3. Set `BACKUP_HOST`, `BACKUP_USER`, `BACKUP_PATH`, and `BACKUP_HOST_KEY` (from
-   `ssh-keyscan -t ed25519 BACKUP_MACHINE`) in `config/deploy.yml`.
-4. `bin/kamal accessory boot litestream` (`bin/kamal setup` also boots it).
+1. On the backup machine (any always-on machine on the tailnet with SSH), create
+   a user and a backup directory owned by it.
+2. Create a key pair just for backups and authorize it for that user:
+   ```sh
+   ssh-keygen -t ed25519 -N "" -C litestream -f litestream_key
+   ssh-copy-id -i litestream_key.pub litestream@backup-machine
+   ```
+3. Add the `litestream` credentials: the private key's contents as
+   `ssh_private_key`, and the backup machine's host key from
+   `ssh-keyscan -t ed25519 backup-machine` (without the leading hostname) as
+   `host_key`. Then delete the local key files.
+4. `bin/kamal accessory boot litestream` and check
+   `bin/kamal accessory logs litestream` for a successful sync.
 
-Check on replication with `bin/kamal accessory logs litestream`. Do a practice
-restore once backups are running.
+Do a practice restore once backups are running.
 
 ### Restoring
 
