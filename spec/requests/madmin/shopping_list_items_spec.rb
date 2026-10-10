@@ -48,7 +48,7 @@ RSpec.describe "Admin shopping list items" do
       it "re-renders the form with errors" do
         params = { shopping_list_item: attributes_for(:shopping_list_item, name: "") }
 
-        post madmin_shopping_list_items_path, params:
+        post(madmin_shopping_list_items_path, params:)
 
         expect(response).to have_http_status(:unprocessable_content)
         expect(response.body).to include("Name can&#39;t be blank")
