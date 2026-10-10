@@ -33,7 +33,7 @@ class PushSubscription < ApplicationRecord
   rescue WebPush::ExpiredSubscription, WebPush::InvalidSubscription
     destroy
     false
-  rescue WebPush::Error => e
+  rescue WebPush::Error, Timeout::Error, SocketError, SystemCallError, OpenSSL::SSL::SSLError => e
     Rails.logger.error("Push to subscription #{id} failed: #{e.message}")
     false
   end
@@ -42,7 +42,7 @@ class PushSubscription < ApplicationRecord
 
   def endpoint_is_a_push_service
     uri = endpoint_uri
-    return if uri.is_a?(URI::HTTPS) && PUSH_SERVICE_HOSTS.any? { push_service_host?(uri.host, it) }
+    return if uri.is_a?(URI::HTTPS) && uri.host && PUSH_SERVICE_HOSTS.any? { push_service_host?(uri.host, it) }
 
     errors.add(:endpoint, "must be a browser push service")
   end

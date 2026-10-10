@@ -21,6 +21,10 @@ RSpec.describe PushSubscription do
       expect(subscription.errors[:endpoint]).to include("must be a browser push service")
     end
 
+    it "rejects HTTPS endpoints without a host" do
+      expect(build(:push_subscription, endpoint: "https:/fcm/send/abc")).to_not be_valid
+    end
+
     it "rejects endpoints that are not HTTPS" do
       expect(build(:push_subscription, endpoint: "http://fcm.googleapis.com/fcm/send/abc")).to_not be_valid
     end
@@ -61,6 +65,18 @@ RSpec.describe PushSubscription do
         response = instance_double(Net::HTTPServiceUnavailable, body: "")
         allow(WebPush).to receive(:payload_send)
           .and_raise(WebPush::PushServiceError.new(response, "push.example.com"))
+
+        result = subscription.deliver(title: "Expiring", body: "Wheat expires soon", path: "/")
+
+        expect(result).to be(false)
+        expect(described_class).to exist(subscription.id)
+      end
+    end
+
+    context "when the push service can't be reached" do
+      it "keeps the subscription and returns false" do
+        subscription = create(:push_subscription)
+        allow(WebPush).to receive(:payload_send).and_raise(Net::OpenTimeout)
 
         result = subscription.deliver(title: "Expiring", body: "Wheat expires soon", path: "/")
 

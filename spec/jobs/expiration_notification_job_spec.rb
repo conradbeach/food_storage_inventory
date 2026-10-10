@@ -9,7 +9,7 @@ RSpec.describe ExpirationNotificationJob do
 
       travel_to(Date.new(2026, 10, 10)) { described_class.perform_now }
 
-      message = include("Peanut Butter expires December 1, 2026.")
+      message = include("Peanut Butter expires December 1, 2026.").and(include('"path":"/madmin"'))
       expect(WebPush).to have_received(:payload_send).with(hash_including(endpoint: first.endpoint, message:))
       expect(WebPush).to have_received(:payload_send).with(hash_including(endpoint: second.endpoint, message:))
       expect(item.reload.expiration_notified_at).to be_present
@@ -26,6 +26,21 @@ RSpec.describe ExpirationNotificationJob do
 
       expect(WebPush).to have_received(:payload_send).once
         .with(hash_including(message: include("3 items expire within the next 4 months.")))
+    end
+  end
+
+  context "when one subscription can't be reached but another accepts the notification" do
+    it "still notifies the other subscription and marks the item notified" do
+      item = create(:item, expires_on: 1.month.from_now)
+      unreachable, reachable = create_list(:push_subscription, 2)
+      allow(WebPush).to receive(:payload_send).with(hash_including(endpoint: unreachable.endpoint))
+        .and_raise(Errno::ECONNREFUSED)
+      allow(WebPush).to receive(:payload_send).with(hash_including(endpoint: reachable.endpoint))
+
+      described_class.perform_now
+
+      expect(WebPush).to have_received(:payload_send).with(hash_including(endpoint: reachable.endpoint))
+      expect(item.reload.expiration_notified_at).to be_present
     end
   end
 

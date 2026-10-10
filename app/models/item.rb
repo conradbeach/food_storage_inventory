@@ -17,7 +17,7 @@ class Item < ApplicationRecord
     return if items.empty?
 
     delivered = PushSubscription.deliver_to_all(
-      title: "Food storage expiring soon", body: expiration_notice_message(items), path: "/",
+      title: "Food storage expiring soon", body: expiration_notice_message(items), path: "/madmin",
     )
     items.each { it.update!(expiration_notified_at: Time.current) } if delivered
   end

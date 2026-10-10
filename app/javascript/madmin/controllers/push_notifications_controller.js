@@ -8,26 +8,43 @@ export default class extends Controller {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return this.show("unsupported")
     if (Notification.permission === "denied") return this.show("denied")
 
+    // Re-sends an existing subscription so the server learns about one the browser rotated.
     const subscription = await this.currentSubscription()
-    this.show(subscription ? "enabled" : "disabled")
+    if (subscription) {
+      this.show(await this.save(subscription) ? "enabled" : "failed")
+    } else {
+      this.show("disabled")
+    }
   }
 
   async enable() {
     if (await Notification.requestPermission() !== "granted") return this.show("denied")
 
-    const registration = await navigator.serviceWorker.register("/service-worker")
-    await navigator.serviceWorker.ready
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: this.decodedVapidPublicKey
-    })
+    try {
+      const registration = await navigator.serviceWorker.register("/service-worker")
+      await navigator.serviceWorker.ready
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: this.decodedVapidPublicKey
+      })
 
-    const response = await this.request("POST", subscription.toJSON())
-    if (response.ok) {
-      this.show("enabled")
-    } else {
-      await subscription.unsubscribe()
+      if (await this.save(subscription)) {
+        this.show("enabled")
+      } else {
+        await subscription.unsubscribe()
+        this.show("failed")
+      }
+    } catch {
       this.show("failed")
+    }
+  }
+
+  async save(subscription) {
+    try {
+      const response = await this.request("POST", subscription.toJSON())
+      return response.ok
+    } catch {
+      return false
     }
   }
 
