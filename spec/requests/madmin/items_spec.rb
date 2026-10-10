@@ -14,6 +14,30 @@ RSpec.describe "Admin items" do
     end
   end
 
+  describe "GET /madmin/items sort order" do
+    it "lists the soonest expiring items first and items without a date last" do
+      create(:item, description: "Salt", expires_on: nil)
+      create(:item, description: "Wheat", expires_on: 10.years.from_now)
+      create(:item, description: "Peanut Butter", expires_on: 1.month.from_now)
+
+      get madmin_items_path
+
+      expect(response.body.scan(/Salt|Wheat|Peanut Butter/).uniq).to eq(["Peanut Butter", "Wheat", "Salt"])
+    end
+
+    context "when sorted by latest expiration" do
+      it "still lists items without a date last" do
+        create(:item, description: "Salt", expires_on: nil)
+        create(:item, description: "Wheat", expires_on: 10.years.from_now)
+        create(:item, description: "Peanut Butter", expires_on: 1.month.from_now)
+
+        get madmin_items_path(sort: "expires_on", direction: "desc")
+
+        expect(response.body.scan(/Salt|Wheat|Peanut Butter/).uniq).to eq(["Wheat", "Peanut Butter", "Salt"])
+      end
+    end
+  end
+
   describe "GET /madmin/items?scope=expiring_soon" do
     it "lists only items expiring soon" do
       create(:item, description: "Peanut Butter", expires_on: 1.month.from_now)

@@ -10,7 +10,13 @@ class Madmin::ItemsController < Madmin::ResourceController
 
   private
 
-  def scoped_resources = super.includes(:food)
+  def scoped_resources
+    items = super.includes(:food)
+    return items unless sort_column == "expires_on"
+
+    # Items without an expiration date go last in either direction.
+    items.reorder(Item.arel_table[:expires_on].public_send(sort_direction).nulls_last)
+  end
 
   def after_create_path
     if params[:add_another]
