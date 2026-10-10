@@ -6,4 +6,8 @@ class HouseholdSupplyResource < Madmin::Resource
   attribute :updated_at, form: false, index: false
 
   def self.display_name(record) = record.name
+
+  def self.default_sort_column = "name"
+
+  def self.default_sort_direction = "asc"
 end
