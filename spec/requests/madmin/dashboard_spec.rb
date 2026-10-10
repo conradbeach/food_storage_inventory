@@ -29,6 +29,15 @@ RSpec.describe "Admin dashboard" do
       expect(summary_section).to include("<td>3 lbs</td>", "<td>0.25</td>", "<td>9</td>", "<td>5</td>", "$42.90")
     end
 
+    it "lists other things to buy" do
+      create(:shopping_list_item, name: "Propane", notes: "Two 20 lb tanks")
+
+      get madmin_root_path
+
+      shopping_section = response.body[%r{<section id="shopping-list">.*?</section>}m]
+      expect(shopping_section).to include("Propane", "Two 20 lb tanks")
+    end
+
     context "when nothing is expiring soon" do
       it "says so" do
         create(:item, expires_on: 10.years.from_now)

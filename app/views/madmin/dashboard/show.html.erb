@@ -80,3 +80,21 @@
     </table>
   </div>
 </section>
+
+<section id="shopping-list">
+  <h2>Also Buy</h2>
+
+  <% if @shopping_list_items.any? %>
+    <ul>
+      <% @shopping_list_items.each do |item| %>
+        <li>
+          <%= link_to item.name, madmin_shopping_list_item_path(item) %>
+          <% if item.notes.present? %>— <%= item.notes %><% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p>Nothing else on the shopping list.</p>
+  <% end %>
+  <p><%= link_to "Add to the shopping list", new_madmin_shopping_list_item_path %></p>
+</section>
