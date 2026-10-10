@@ -72,9 +72,9 @@ deploy:
   ssh_user: conrad
   host: home-server.example.ts.net         # the app's Tailscale HTTPS name
 litestream:       # optional until backups are set up (see Backups)
-  host: backup-machine.example.ts.net:22
+  host: 100.x.y.z:22                       # backup machine's Tailscale IP
   user: litestream
-  path: /path/to/backups/food_storage_inventory
+  path: /food_storage_inventory            # inside the backup machine's /srv/litestream
   host_key: ssh-ed25519 AAAA...
   ssh_private_key: |
     -----BEGIN OPENSSH PRIVATE KEY-----
@@ -143,19 +143,25 @@ restored to any point in that window. The cache, queue, and cable databases
 aren't backed up because their data is disposable. The accessory is only
 configured once the `litestream` credentials exist.
 
+The backup machine doesn't need to be always on. While it's unreachable,
+Litestream keeps changes on the home server and retries at least once a minute;
+it uploads them as soon as the machine is back on the tailnet. Changes made
+since its last connection are at risk only if the home server fails meanwhile.
+
 Setup:
 
-1. On the backup machine (any always-on machine on the tailnet with SSH), create
-   a user and a backup directory owned by it.
-2. Create a key pair just for backups and authorize it for that user:
+1. Generate a key pair just for backups, and add the `litestream` credentials
+   (see Credentials) with the private key and the backup machine's Tailscale IP
+   as the host. Use the IP rather than its Tailscale name, which Docker
+   containers may not be able to resolve.
+2. On the backup machine (Linux with systemd and OpenSSH), run
+   `script/setup_backup_machine`, which creates an SFTP-only `litestream` user
+   jailed to `/srv/litestream`, limits SSH logins to that user from the home
+   server, allows it through ufw, and prints the machine's host key:
    ```sh
-   ssh-keygen -t ed25519 -N "" -C litestream -f litestream_key
-   ssh-copy-id -i litestream_key.pub litestream@backup-machine
+   sudo script/setup_backup_machine "<litestream public key>" <home server Tailscale IP>
    ```
-3. Add the `litestream` credentials: the private key's contents as
-   `ssh_private_key`, and the backup machine's host key from
-   `ssh-keyscan -t ed25519 backup-machine` (without the leading hostname) as
-   `host_key`. Then delete the local key files.
+3. Add the printed host key as `litestream.host_key`.
 4. `bin/kamal accessory boot litestream` and check
    `bin/kamal accessory logs litestream` for a successful sync.
 
