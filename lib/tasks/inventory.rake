@@ -5,6 +5,6 @@ namespace :inventory do
 
     InventoryImport.new(args[:directory]).run
     puts "Imported #{Item.count} items across #{Food.count} foods, #{Person.count} people, " \
-         "and #{HouseholdSupply.count} household supplies."
+         "#{HouseholdSupply.count} household supplies, and #{ShoppingListItem.count} shopping list items."
   end
 end
