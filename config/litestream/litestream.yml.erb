@@ -6,9 +6,10 @@ snapshot:
   interval: 24h
   retention: 720h
 
-# Each check lists the bucket twice. The 15s default would use about a third
-# of R2's free 1 million monthly Class A operations even while idle.
-l0-retention-check-interval: 5m
+# Each check lists the bucket twice to find local files that are safely in R2.
+# The 15s default would use about a third of R2's free 1 million monthly
+# Class A operations even while idle; uploads still happen as changes occur.
+l0-retention-check-interval: 1h
 
 dbs:
   - path: /rails/storage/production.sqlite3
