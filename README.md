@@ -14,7 +14,7 @@ Rails app with a [Madmin](https://github.com/excid3/madmin) admin interface:
 - Adding items: "Save and add another" saves and opens a new form prefilled with
   the same details; "Copy and edit" on any item opens a prefilled new item form.
 - **Notifications**: installed as a PWA, each phone can opt in to a push
-  notification when items enter the 4-month window (checked daily at 8am
+  notification when items enter the 4-month window (checked Saturdays at 8am
   Mountain time).
 - Background jobs (Solid Queue) are visible in Mission Control at `/jobs`.
 
@@ -126,9 +126,9 @@ iOS only allows push notifications for web apps added to the Home Screen
 3. Open Food Storage from the Home Screen and tap **Notify me about expiring
    items** on the dashboard.
 
-Each phone subscribes separately. A notification goes out the first day items
-enter the 4-month window. If no phone can be reached that day, it's retried the
-next day.
+Each phone subscribes separately. A notification goes out on the first Saturday
+after items enter the 4-month window. If no phone can be reached, it's retried
+the next Saturday.
 
 ## Backups
 

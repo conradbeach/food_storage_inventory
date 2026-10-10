@@ -15,4 +15,4 @@ production:
     schedule: every hour at minute 12
   notify_expiring_items:
     class: ExpirationNotificationJob
-    schedule: "0 8 * * * America/Denver"
+    schedule: "0 8 * * 6 America/Denver" # Saturdays at 8am
