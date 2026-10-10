@@ -41,12 +41,16 @@ class PushSubscription < ApplicationRecord
   private
 
   def endpoint_is_a_push_service
-    uri = URI.parse(endpoint.to_s)
+    uri = endpoint_uri
     return if uri.is_a?(URI::HTTPS) && PUSH_SERVICE_HOSTS.any? { push_service_host?(uri.host, it) }
 
     errors.add(:endpoint, "must be a browser push service")
+  end
+
+  def endpoint_uri
+    URI.parse(endpoint.to_s)
   rescue URI::InvalidURIError
-    errors.add(:endpoint, "must be a browser push service")
+    nil
   end
 
   def push_service_host?(host, allowed)

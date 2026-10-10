@@ -26,7 +26,7 @@ class Item < ApplicationRecord
     if items.one?
       "#{items.first.name} expires #{items.first.expires_on.to_fs(:long)}."
     else
-      "#{items.size} items expire within the next 4 months."
+      "#{items.size} items expire within the next #{EXPIRATION_WARNING_PERIOD.inspect}."
     end
   end
   private_class_method :expiration_notice_message

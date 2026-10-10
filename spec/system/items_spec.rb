@@ -6,7 +6,7 @@ RSpec.describe "Managing items" do
     sign_in_as(create(:user))
 
     click_on "Add Item"
-    fill_in "item_food_id_combobox", with: "Rice"
+    fill_in "Food", with: "Rice"
     find("[role=option]", text: "Rice").click
     fill_in "Description", with: "White Rice"
     fill_in "Amount", with: "32.4"

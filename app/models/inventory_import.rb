@@ -26,7 +26,7 @@ class InventoryImport
     food = category.foods.create!(food_attributes(definition))
 
     definition[:tables].each do |table|
-      import_items(food, table, definition[:amount_column], multiple_tables: definition[:tables].many?)
+      import_items(food, table, definition.fetch(:amount_column, 1), multiple_tables: definition[:tables].many?)
     end
   end
 
@@ -43,13 +43,14 @@ class InventoryImport
 
   def import_items(food, table, amount_column, multiple_tables:)
     rows(table).each do |row|
-      amount_text = amount_column ? row[amount_column] : row[1]
+      amount_text = row[amount_column]
+      amount = number(amount_text)
       # Skips blank rows and notes such as links or "Months Supplied For" footers.
-      next if number(amount_text).nil? && (row[0].blank? || amount_text.blank?)
+      next if amount.nil? && (row[0].blank? || amount_text.blank?)
 
       food.items.create!(
-        description: item_description(table, row[0], amount_text, multiple_tables:),
-        amount: number(amount_text),
+        description: item_description(table, row[0], amount.nil? ? amount_text : nil, multiple_tables:),
+        amount:,
         expires_on: expiration_date(row["Exp. Date"]),
       )
     end
@@ -57,15 +58,12 @@ class InventoryImport
 
   # Blank descriptions take the sub-table's name, e.g. "Pinto Beans". Amounts
   # that aren't numbers, like "195 grams, 20 varieties", are kept in the text.
-  def item_description(table, description, amount_text, multiple_tables:)
+  def item_description(table, description, unparsed_amount, multiple_tables:)
     table_name = table.split("-", 2).last
-    description = description.to_s.strip
-    description = table_name if description.empty?
-    if multiple_tables && description.downcase.exclude?(table_name.downcase)
-      description = "#{table_name}: #{description}"
-    end
-    description += " (#{amount_text})" if amount_text.present? && number(amount_text).nil?
-    description
+    description = description.to_s.strip.presence || table_name
+    prefix = "#{table_name}: " if multiple_tables && description.downcase.exclude?(table_name.downcase)
+    suffix = " (#{unparsed_amount})" if unparsed_amount
+    "#{prefix}#{description}#{suffix}"
   end
 
   def import_people

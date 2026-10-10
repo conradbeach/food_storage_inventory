@@ -11,7 +11,7 @@
 <%= render "push_notifications" %>
 
 <section id="expiring-items">
-  <h2>Expiring in the Next 4 Months</h2>
+  <h2>Expiring in the Next <%= Item::EXPIRATION_WARNING_PERIOD.inspect.titleize %></h2>
 
   <% if @expiring_items.any? %>
     <div class="table-scroll">
@@ -40,7 +40,7 @@
       </table>
     </div>
   <% else %>
-    <p>Nothing expires in the next 4 months.</p>
+    <p>Nothing expires in the next <%= Item::EXPIRATION_WARNING_PERIOD.inspect %>.</p>
   <% end %>
 </section>
 

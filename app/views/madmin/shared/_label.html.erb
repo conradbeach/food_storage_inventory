@@ -1,0 +1,5 @@
+<%# Labels belongs_to fields by their foreign key so the label targets the select. %>
+<%= form.label field.is_a?(Madmin::Fields::BelongsTo) ? field.to_param : field.attribute_name, field.options.label %>
+<% if field.required? %>
+  <span class="required">*</span>
+<% end %>

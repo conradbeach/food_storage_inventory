@@ -1,6 +1,4 @@
 module InventoryImport::Foods
-  ADULT_CALORIES_PER_YEAR = Person::ADULT_DAILY_CALORIES * 365
-
   # Each food is a row on the spreadsheet's Summary sheet; its items come from
   # one or more sub-tables. `summary` names the Summary and Shopping List row.
   DEFINITIONS = [
@@ -43,7 +41,7 @@ module InventoryImport::Foods
     { category: "Other", name: "Garden Seeds", tables: ["Other-Garden Seeds"] },
     {
       category: "3 Month Supply", name: "Long Term Food", unit: "calories",
-      yearly_amount_per_person: ADULT_CALORIES_PER_YEAR, tables: ["3 Month Supply-Long Term Food"]
+      yearly_amount_per_person: Person::ADULT_DAILY_CALORIES * 365, tables: ["3 Month Supply-Long Term Food"]
     },
   ].freeze
 end

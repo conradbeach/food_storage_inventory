@@ -39,7 +39,8 @@ module FoodStorageInventory
     # Don't generate system test files.
     config.generators.system_tests = nil
 
-    # Mission Control inherits ApplicationController, which requires signing in.
+    # Mission Control requires signing in through ApplicationController instead of HTTP basic auth.
+    config.mission_control.jobs.base_controller_class = "ApplicationController"
     config.mission_control.jobs.http_basic_auth_enabled = false
   end
 end

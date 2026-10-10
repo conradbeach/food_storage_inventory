@@ -10,6 +10,8 @@ class Madmin::ItemsController < Madmin::ResourceController
 
   private
 
+  def scoped_resources = super.includes(:food)
+
   def after_create_path
     if params[:add_another]
       main_app.new_madmin_item_path(item: @record.copyable_attributes)
