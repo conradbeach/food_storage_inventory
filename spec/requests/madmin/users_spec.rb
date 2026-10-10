@@ -41,6 +41,19 @@ RSpec.describe "Admin users" do
       end
     end
 
+    context "with an email address that's already taken" do
+      it "re-renders the form with errors" do
+        post madmin_users_path, params: {
+          user: {
+            email_address: current_user.email_address, password: "secret123", password_confirmation: "secret123",
+          },
+        }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include("Email address has already been taken")
+      end
+    end
+
     context "with mismatched passwords" do
       it "re-renders the form with errors" do
         post madmin_users_path, params: {
