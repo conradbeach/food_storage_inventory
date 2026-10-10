@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["unsupported", "denied", "disabled", "enabled"]
+  static targets = ["unsupported", "denied", "disabled", "enabled", "failed"]
   static values = { vapidPublicKey: String, url: String }
 
   async connect() {
@@ -22,8 +22,13 @@ export default class extends Controller {
       applicationServerKey: this.decodedVapidPublicKey
     })
 
-    await this.request("POST", subscription.toJSON())
-    this.show("enabled")
+    const response = await this.request("POST", subscription.toJSON())
+    if (response.ok) {
+      this.show("enabled")
+    } else {
+      await subscription.unsubscribe()
+      this.show("failed")
+    }
   }
 
   async disable() {

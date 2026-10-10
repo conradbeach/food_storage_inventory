@@ -19,5 +19,9 @@
       This device is notified about expiring items.
       <button type="button" class="btn btn-secondary" data-action="push-notifications#disable">Turn off</button>
     </p>
+    <p data-push-notifications-target="failed" hidden>
+      Notifications couldn't be turned on for this device.
+      <button type="button" class="btn btn-secondary" data-action="push-notifications#enable">Try again</button>
+    </p>
   </section>
 <% end %>
