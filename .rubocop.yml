@@ -125,3 +125,7 @@ Style/WordArray:
 # A personal, English-only app; flash messages don't need locale files.
 Rails/I18nLocaleTexts:
   Enabled: false
+
+# Methods like PushSubscription#deliver perform an action and report success.
+Naming/PredicateMethod:
+  AllowedMethods: [call, deliver, deliver_to_all]

@@ -11,7 +11,7 @@ class ItemResource < Madmin::Resource
   scope :expiring_soon
 
   member_action collection: true do |record|
-    link_to "Copy and edit", copy_madmin_item_path(record), class: "btn btn-secondary"
+    link_to "Copy and edit", new_madmin_item_path(item: record.copyable_attributes), class: "btn btn-secondary"
   end
 
   def self.display_name(record) = record.name

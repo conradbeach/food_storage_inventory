@@ -5,13 +5,12 @@ RSpec.describe "Admin items" do
 
   describe "GET /madmin/items" do
     it "lists items with copy links" do
-      item = create(:item, description: "Hard Red Wheat")
+      create(:item, description: "Hard Red Wheat")
 
       get madmin_items_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Hard Red Wheat")
-      expect(response.body).to include(copy_madmin_item_path(item))
+      expect(response.body).to include("Hard Red Wheat", "Copy and edit")
     end
   end
 
@@ -88,11 +87,13 @@ RSpec.describe "Admin items" do
     end
   end
 
-  describe "GET /madmin/items/:id/copy" do
+  describe "copying an item" do
     it "opens a new item form prefilled from the item" do
       item = create(:item, description: "Hard Red Wheat", amount: 45, expires_on: Date.new(2040, 1, 1))
+      get madmin_item_path(item)
+      copy_link = response.parsed_body.css("a").find { it.text == "Copy and edit" }
 
-      get copy_madmin_item_path(item)
+      get copy_link["href"]
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(%(action="#{madmin_items_path}"))

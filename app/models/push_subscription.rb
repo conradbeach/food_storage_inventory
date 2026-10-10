@@ -3,6 +3,21 @@ class PushSubscription < ApplicationRecord
 
   validates :endpoint, :p256dh_key, :auth_key, presence: true
   validates :endpoint, uniqueness: true
+  validate :endpoint_is_a_push_service
+
+  # Browsers' push services; endpoints elsewhere are rejected so the server
+  # can't be made to send requests to arbitrary hosts.
+  PUSH_SERVICE_HOSTS = [
+    "fcm.googleapis.com",
+    "updates.push.services.mozilla.com",
+    ".push.apple.com",
+    ".notify.windows.com",
+  ].freeze
+
+  # Returns whether any subscription accepted the notification.
+  def self.deliver_to_all(title:, body:, path:)
+    find_each.map { it.deliver(title:, body:, path:) }.any?
+  end
 
   # Returns whether the push service accepted the notification.
   def deliver(title:, body:, path:)
@@ -20,5 +35,20 @@ class PushSubscription < ApplicationRecord
   rescue WebPush::Error => e
     Rails.logger.error("Push to subscription #{id} failed: #{e.message}")
     false
+  end
+
+  private
+
+  def endpoint_is_a_push_service
+    uri = URI.parse(endpoint.to_s)
+    return if uri.is_a?(URI::HTTPS) && PUSH_SERVICE_HOSTS.any? { push_service_host?(uri.host, it) }
+
+    errors.add(:endpoint, "must be a browser push service")
+  rescue URI::InvalidURIError
+    errors.add(:endpoint, "must be a browser push service")
+  end
+
+  def push_service_host?(host, allowed)
+    allowed.start_with?(".") ? host.end_with?(allowed) : host == allowed
   end
 end

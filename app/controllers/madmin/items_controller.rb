@@ -8,16 +8,11 @@ class Madmin::ItemsController < Madmin::ResourceController
     end
   end
 
-  def copy
-    @record = @record.dup
-    render :new
-  end
-
   private
 
   def after_create_path
     if params[:add_another]
-      main_app.new_madmin_item_path(item: @record.slice(:food_id, :description, :amount, :expires_on))
+      main_app.new_madmin_item_path(item: @record.copyable_attributes)
     else
       resource.show_path(@record)
     end
