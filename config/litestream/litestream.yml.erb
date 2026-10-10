@@ -6,12 +6,17 @@ snapshot:
   interval: 24h
   retention: 720h
 
+# Each check lists the bucket twice. The 15s default would use about a third
+# of R2's free 1 million monthly Class A operations even while idle.
+l0-retention-check-interval: 5m
+
 dbs:
   - path: /rails/storage/production.sqlite3
     replica:
-      type: sftp
-      host: <%= KAMAL_CREDENTIALS.dig(:litestream, :host) %>
-      user: <%= KAMAL_CREDENTIALS.dig(:litestream, :user) %>
-      key-path: /etc/litestream/id_ed25519
-      host-key: "<%= KAMAL_CREDENTIALS.dig(:litestream, :host_key) %>"
-      path: <%= KAMAL_CREDENTIALS.dig(:litestream, :path) %>
+      type: s3
+      endpoint: <%= KAMAL_CREDENTIALS.dig(:litestream, :endpoint) %>
+      region: auto
+      bucket: <%= KAMAL_CREDENTIALS.dig(:litestream, :bucket) %>
+      path: production.sqlite3
+      access-key-id: <%= KAMAL_CREDENTIALS.dig(:litestream, :access_key_id) %>
+      secret-access-key: <%= KAMAL_CREDENTIALS.dig(:litestream, :secret_access_key) %>
