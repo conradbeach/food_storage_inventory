@@ -45,7 +45,7 @@ RSpec.describe "Admin users" do
       it "re-renders the form with errors" do
         post madmin_users_path, params: {
           user: {
-            email_address: current_user.email_address, password: "secret123", password_confirmation: "secret123",
+            email_address: current_user.email_address, password: "secret123", password_confirmation: "secret123"
           },
         }
 
