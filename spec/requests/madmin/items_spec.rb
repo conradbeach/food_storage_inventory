@@ -51,13 +51,13 @@ RSpec.describe "Admin items" do
   end
 
   describe "GET /madmin/items/:id" do
-    it "shows the item" do
-      item = create(:item, description: "Hard Red Wheat")
+    it "shows the item with a readable expiration date" do
+      item = create(:item, description: "Hard Red Wheat", expires_on: Date.new(2046, 1, 1))
 
       get madmin_item_path(item)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Hard Red Wheat")
+      expect(response.body).to include("Hard Red Wheat", "January 1, 2046")
     end
   end
 
