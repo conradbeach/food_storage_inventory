@@ -5,8 +5,7 @@ Rails app with a [Madmin](https://github.com/excid3/madmin) admin interface:
 
 - **Dashboard** (`/madmin`): items expiring in the next 4 months (including
   anything already expired) and the spreadsheet's supply summary — years
-  supplied per food, how much more is needed for a year, and the shopping cost —
-  plus a free-text list of other things to buy (propane, first aid supplies…).
+  supplied per food, how much more is needed for a year, and the shopping cost.
 - **Foods** are the Summary sheet's rows (Wheat, Legumes, Vitamin C…), with a
   yearly per-person target and package size/price for the shopping list.
   **Items** are the stored containers or lots counted toward a food.

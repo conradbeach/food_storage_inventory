@@ -57,13 +57,6 @@ RSpec.describe InventoryImport do
       expect(HouseholdSupply.pluck(:name, :quantity_to_store)).to eq([["Bar Soap", "12 bars"]])
     end
 
-    it "imports the free-text shopping list" do
-      described_class.new(directory).run
-
-      expect(ShoppingListItem.order(:id).pluck(:name, :notes))
-        .to eq([["Propane", nil], ["Additional first aid supplies", "Bandages and gauze"]])
-    end
-
     context "when items already exist" do
       it "refuses to import again" do
         create(:item)
