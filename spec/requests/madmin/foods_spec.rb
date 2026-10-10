@@ -24,7 +24,7 @@ RSpec.describe "Admin foods" do
       items_table = response.parsed_body.css("table table")
       expect(items_table.css("th").map { it.text.strip }).to eq(["Description", "Amount", "Expires on", ""])
       expect(items_table.css("tbody td").map { it.text.squish })
-        .to eq(["Hard Red", "45.0", "2048-01-01", "View Edit Copy and edit"])
+        .to eq(["Hard Red", "45.0", "January 1, 2048", "View Edit Copy and edit"])
     end
 
     it "lists its items soonest expiring first, with undated items last" do
