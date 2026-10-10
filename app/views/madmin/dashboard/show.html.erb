@@ -1,0 +1,82 @@
+<%= content_for :title, "Dashboard" %>
+
+<header class="header">
+  <h1>Food Storage</h1>
+
+  <div class="actions">
+    <%= link_to "Add Item", new_madmin_item_path, class: "btn btn-primary" %>
+  </div>
+</header>
+
+<%= render "push_notifications" %>
+
+<section id="expiring-items">
+  <h2>Expiring in the Next <%= Item::EXPIRATION_WARNING_PERIOD.inspect.titleize %></h2>
+
+  <% if @expiring_items.any? %>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Food</th>
+            <th>Amount</th>
+            <th>Expires</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @expiring_items.each do |item| %>
+            <tr>
+              <td><%= link_to item.name, madmin_item_path(item) %></td>
+              <td><%= item.food.name %></td>
+              <td><%= format_amount(item.amount) %> <%= item.food.unit %></td>
+              <td>
+                <%= item.expires_on.to_fs(:long) %>
+                <% if item.expired? %><strong>(expired)</strong><% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p>Nothing expires in the next <%= Item::EXPIRATION_WARNING_PERIOD.inspect %>.</p>
+  <% end %>
+</section>
+
+<section id="supply-summary">
+  <h2>Supply Summary</h2>
+  <p>
+    Household size: <%= format_amount(@household_size) %> adults
+    (<%= link_to "edit people", madmin_people_path %>)
+  </p>
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>Food</th>
+          <th>On Hand</th>
+          <th>Per Person / Year</th>
+          <th>Years Supplied</th>
+          <th>Needed</th>
+          <th>Packages to Buy</th>
+          <th>Estimated Cost</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @foods.each do |food| %>
+          <tr>
+            <td><%= link_to food.name, madmin_food_path(food) %></td>
+            <td><%= format_amount(food.total_amount) %> <%= food.unit %></td>
+            <td><%= format_amount(food.yearly_amount_per_person) %></td>
+            <td><%= format_amount(food.years_supplied(@household_size)) %></td>
+            <td><%= format_amount(food.amount_needed(@household_size)) %></td>
+            <td><%= format_amount(food.packages_needed(@household_size)) %></td>
+            <td><%= number_to_currency(food.estimated_cost(@household_size)) || "—" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>

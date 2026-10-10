@@ -1,0 +1,7 @@
+{
+  "name": "food_storage_inventory",
+  "private": true,
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}
