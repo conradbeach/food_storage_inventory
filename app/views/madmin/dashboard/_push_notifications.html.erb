@@ -1,0 +1,23 @@
+<% if Rails.configuration.x.vapid[:public_key].present? %>
+  <section id="push-notifications"
+    data-controller="push-notifications"
+    data-push-notifications-vapid-public-key-value="<%= Rails.configuration.x.vapid[:public_key] %>"
+    data-push-notifications-url-value="<%= push_subscription_path %>">
+    <p data-push-notifications-target="unsupported" hidden>
+      To get notified about expiring items on an iPhone, tap Share → Add to Home Screen,
+      then open Food Storage from the Home Screen and enable notifications there.
+    </p>
+    <p data-push-notifications-target="denied" hidden>
+      Notifications are blocked for this site. Allow them in your browser or phone settings to be notified.
+    </p>
+    <p data-push-notifications-target="disabled" hidden>
+      <button type="button" class="btn btn-secondary" data-action="push-notifications#enable">
+        Notify me about expiring items
+      </button>
+    </p>
+    <p data-push-notifications-target="enabled" hidden>
+      This device is notified about expiring items.
+      <button type="button" class="btn btn-secondary" data-action="push-notifications#disable">Turn off</button>
+    </p>
+  </section>
+<% end %>

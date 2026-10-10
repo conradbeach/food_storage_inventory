@@ -8,7 +8,7 @@ class Food < ApplicationRecord
   validates :package_price, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
   def total_amount
-    items.sum(:amount)
+    items.sum { it.amount || 0 }
   end
 
   def years_supplied(household_size)
