@@ -9,7 +9,7 @@ class PushSubscription < ApplicationRecord
   # can't be made to send requests to arbitrary hosts.
   PUSH_SERVICE_HOSTS = [
     "fcm.googleapis.com",
-    ".google.com",
+    "jmt17.google.com",
     "updates.push.services.mozilla.com",
     ".push.apple.com",
     ".notify.windows.com",
