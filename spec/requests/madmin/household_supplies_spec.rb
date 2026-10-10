@@ -4,13 +4,15 @@ RSpec.describe "Admin household supplies" do
   before { sign_in }
 
   describe "GET /madmin/household_supplies" do
-    it "lists household supplies" do
+    it "lists household supplies alphabetically by name" do
+      create(:household_supply, name: "Toilet Paper")
       create(:household_supply, name: "Bar Soap")
+      create(:household_supply, name: "Matches")
 
       get madmin_household_supplies_path
 
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Bar Soap")
+      names = response.parsed_body.css("tbody tr").map { it.css("td").first.text.strip }
+      expect(names).to eq(["Bar Soap", "Matches", "Toilet Paper"])
     end
   end
 
