@@ -16,7 +16,6 @@ class InventoryImport
       Foods::DEFINITIONS.each { import_food(it) }
       import_people
       import_household_supplies
-      import_shopping_list
     end
   end
 
@@ -80,15 +79,6 @@ class InventoryImport
       next if row["Description"].blank?
 
       HouseholdSupply.create!(name: row["Description"], quantity_to_store: row["Quantity to Store"])
-    end
-  end
-
-  # The "Other" table has no column headers: an item, then optional notes.
-  def import_shopping_list
-    rows("Shopping List-Other").each do |row|
-      next if row[0].blank?
-
-      ShoppingListItem.create!(name: row[0], notes: row[1].presence)
     end
   end
 
