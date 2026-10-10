@@ -41,7 +41,8 @@ RSpec.describe "Admin dashboard" do
 
     context "when push notifications are configured" do
       it "offers to enable notifications" do
-        allow(Rails.configuration.x).to receive(:vapid).and_return(public_key: "public-key")
+        allow(Rails.application.credentials).to receive(:dig).and_call_original
+        allow(Rails.application.credentials).to receive(:dig).with(:vapid, :public_key).and_return("public-key")
 
         get madmin_root_path
 
@@ -51,7 +52,8 @@ RSpec.describe "Admin dashboard" do
 
     context "when push notifications are not configured" do
       it "does not offer notifications" do
-        allow(Rails.configuration.x).to receive(:vapid).and_return(public_key: nil)
+        allow(Rails.application.credentials).to receive(:dig).and_call_original
+        allow(Rails.application.credentials).to receive(:dig).with(:vapid, :public_key).and_return(nil)
 
         get madmin_root_path
 

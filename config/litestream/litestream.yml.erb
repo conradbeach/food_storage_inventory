@@ -1,0 +1,17 @@
+<% require File.expand_path(".kamal/credentials") %>
+# Litestream configuration for the Kamal accessory in config/deploy.yml.
+# Only the primary database is replicated; the cache, queue, and cable
+# databases hold disposable data.
+snapshot:
+  interval: 24h
+  retention: 720h
+
+dbs:
+  - path: /rails/storage/production.sqlite3
+    replica:
+      type: sftp
+      host: <%= KAMAL_CREDENTIALS.dig(:litestream, :host) %>
+      user: <%= KAMAL_CREDENTIALS.dig(:litestream, :user) %>
+      key-path: /etc/litestream/id_ed25519
+      host-key: "<%= KAMAL_CREDENTIALS.dig(:litestream, :host_key) %>"
+      path: <%= KAMAL_CREDENTIALS.dig(:litestream, :path) %>
