@@ -77,6 +77,7 @@ RSpec/NotToNot:
 Style/ClassAndModuleChildren:
   Description: Checks the style of children definitions at classes and modules.
   EnforcedStyle: compact
+  Exclude: ['config/application.rb']
 
 # I think there are many cases where this type of documentation is useful, but I
 # don't want to enforce it in every case. Just add docs where it helps.
