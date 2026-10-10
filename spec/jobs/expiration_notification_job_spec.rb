@@ -79,4 +79,16 @@ RSpec.describe ExpirationNotificationJob do
       expect(item.reload.expiration_notified_at).to be_nil
     end
   end
+
+  describe "schedule" do
+    it "runs on Saturdays at 8am Mountain time in production" do
+      require "fugit"
+      config = Rails.application.config_for(:recurring, env: "production").fetch(:notify_expiring_items)
+
+      next_run = Fugit.parse_cron(config[:schedule]).next_time(Time.zone.parse("2026-10-12 12:00")).to_t
+
+      expect(config[:class]).to eq("ExpirationNotificationJob")
+      expect(next_run).to eq(Time.find_zone("America/Denver").parse("2026-10-17 08:00"))
+    end
+  end
 end
