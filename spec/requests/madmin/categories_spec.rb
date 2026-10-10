@@ -15,13 +15,16 @@ RSpec.describe "Admin categories" do
   end
 
   describe "GET /madmin/categories/:id" do
-    it "shows the record" do
-      record = create(:category, name: "Grains")
+    it "shows its foods in a table without a category column, alphabetically" do
+      category = create(:category, name: "Grains")
+      create(:food, category:, name: "Wheat")
+      create(:food, category:, name: "Rice")
 
-      get madmin_category_path(record)
+      get madmin_category_path(category)
 
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Grains")
+      foods_table = response.parsed_body.css("table table")
+      expect(foods_table.css("th").map { it.text.strip }).to_not include("Category")
+      expect(foods_table.css("tbody tr").map { it.css("td").first.text.strip }).to eq(["Rice", "Wheat"])
     end
   end
 

@@ -4,6 +4,13 @@ RSpec.describe "Admin dashboard" do
   before { sign_in }
 
   describe "GET /madmin" do
+    it "lists categories, foods, and items first in the navigation" do
+      get madmin_root_path
+
+      navigation = response.parsed_body.css("nav a").map { it.text.strip }
+      expect(navigation.first(4)).to eq(["Dashboard", "Categories", "Foods", "Items"])
+    end
+
     it "lists items expiring within 4 months, including expired ones" do
       create(:item, description: "Expired Peanut Butter", expires_on: 1.week.ago)
       create(:item, description: "Sunflower Oil", expires_on: 3.months.from_now)

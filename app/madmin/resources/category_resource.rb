@@ -1,4 +1,6 @@
 class CategoryResource < Madmin::Resource
+  menu position: 1
+
   attribute :id, form: false, index: false
   attribute :name
   attribute :created_at, form: false, index: false

@@ -15,14 +15,28 @@ RSpec.describe "Admin foods" do
   end
 
   describe "GET /madmin/foods/:id" do
-    it "shows the food and its items" do
+    it "shows its items in a table with the items index's columns and actions, except food" do
       food = create(:food, name: "Wheat")
-      create(:item, food:, description: "Hard Red")
+      create(:item, food:, description: "Hard Red", amount: 45, expires_on: Date.new(2048, 1, 1))
 
       get madmin_food_path(food)
 
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Wheat", "Hard Red")
+      items_table = response.parsed_body.css("table table")
+      expect(items_table.css("th").map { it.text.strip }).to eq(["Description", "Amount", "Expires on", ""])
+      expect(items_table.css("tbody td").map { it.text.squish })
+        .to eq(["Hard Red", "45.0", "2048-01-01", "View Edit Copy and edit"])
+    end
+
+    it "lists its items soonest expiring first, with undated items last" do
+      food = create(:food)
+      create(:item, food:, description: "Hard Red", expires_on: Date.new(2048, 1, 1))
+      create(:item, food:, description: "Hard White", expires_on: nil)
+      create(:item, food:, description: "Bread Flour", expires_on: Date.new(2030, 6, 1))
+
+      get madmin_food_path(food)
+
+      descriptions = response.parsed_body.css("table table tbody tr").map { it.css("td").first.text.strip }
+      expect(descriptions).to eq(["Bread Flour", "Hard Red", "Hard White"])
     end
   end
 
