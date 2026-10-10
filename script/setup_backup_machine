@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Sets up this machine as the Litestream backup target: an SFTP-only
+# "litestream" user jailed to /srv/litestream that only the home server can
+# reach. Run it with sudo on the backup machine (Linux with systemd, OpenSSH,
+# and optionally ufw); it's safe to run again.
+#
+#   sudo script/setup_backup_machine "<litestream SSH public key>" <home server Tailscale IP>
+#
+# Note that SSH logins are then limited to this user from the home server.
+set -euo pipefail
+
+if [[ $# -ne 2 ]]; then
+  echo "Usage: sudo $0 \"<litestream SSH public key>\" <home server Tailscale IP>" >&2
+  exit 1
+fi
+
+public_key="$1"
+home_server_ip="$2"
+backup_root=/srv/litestream
+
+id litestream &>/dev/null || useradd --system --home-dir "$backup_root" --shell "$(command -v nologin)" litestream
+
+# sshd requires the chroot to be owned by root; Litestream writes in the app's folder.
+install -d -o root -g root -m 755 "$backup_root"
+install -d -o litestream -g litestream -m 700 "$backup_root/food_storage_inventory"
+
+install -d -m 755 /etc/ssh/authorized_keys
+echo "$public_key" > /etc/ssh/authorized_keys/litestream
+chmod 644 /etc/ssh/authorized_keys/litestream
+
+cat > /etc/ssh/sshd_config.d/50-litestream.conf <<EOF
+# Managed by food_storage_inventory's script/setup_backup_machine.
+AllowUsers litestream@$home_server_ip
+
+Match User litestream
+  AuthorizedKeysFile /etc/ssh/authorized_keys/litestream
+  ChrootDirectory $backup_root
+  ForceCommand internal-sftp
+  AllowTcpForwarding no
+  X11Forwarding no
+  PasswordAuthentication no
+EOF
+
+ssh-keygen -A
+sshd -t
+systemctl enable sshd
+systemctl restart sshd
+
+if command -v ufw &>/dev/null; then
+  ufw allow in on tailscale0 from "$home_server_ip" to any port 22 proto tcp comment "Litestream backups"
+fi
+
+echo
+echo "Backup machine ready. Its SSH host key, for the litestream.host_key credential:"
+cut -d " " -f 1,2 /etc/ssh/ssh_host_ed25519_key.pub
