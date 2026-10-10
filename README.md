@@ -57,6 +57,21 @@ month/year dates ("8/27") as the first of the month, so they're flagged early;
 (model, request, job, and Playwright system specs). GitHub Actions runs the same
 checks.
 
+### Keeping dependencies up to date
+
+Nothing updates dependencies automatically, and CI's security audit only runs
+on push. Every month or so, update everything, check, and deploy:
+
+```sh
+bundle update
+bin/importmap outdated   # pin any updates with bin/importmap pin <package>
+bin/ci
+bin/kamal deploy
+```
+
+Also bump the Litestream image version in `config/deploy.yml` now and then,
+reading its release notes first, then run `bin/kamal accessory reboot litestream`.
+
 ## Credentials
 
 Settings that shouldn't be in this public repository live in Rails credentials
