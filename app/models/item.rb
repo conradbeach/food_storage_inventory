@@ -9,6 +9,7 @@ class Item < ApplicationRecord
 
   scope :expiring_soon, -> { where(expires_on: ..(Date.current + EXPIRATION_WARNING_PERIOD)).order(:expires_on) }
   scope :awaiting_expiration_notice, -> { expiring_soon.where(expiration_notified_at: nil) }
+  scope :by_expiration, -> { order(arel_table[:expires_on].asc.nulls_last) }
 
   # Notifies every device about items newly expiring soon. Items stay
   # unnotified, to be retried, unless at least one device was reached.

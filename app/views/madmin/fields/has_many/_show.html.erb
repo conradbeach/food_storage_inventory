@@ -1,0 +1,39 @@
+<%# A table like the associated resource's index page, minus the column linking back to this record. %>
+<% page, records = field.paginated_value(record, params) %>
+<% associated_resource = field.associated_resource %>
+<% inverse_name = field.model.reflect_on_association(field.attribute_name).inverse_of&.name %>
+<% attributes = associated_resource.attributes.values.select { it.field&.visible?(:index) && it.name != inverse_name } %>
+
+<div class="table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <% attributes.each do |attribute| %>
+          <th><%= attribute.field.label %></th>
+        <% end %>
+        <th></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <% records.each do |object| %>
+        <tr>
+          <% attributes.each do |attribute| %>
+            <td><%= render partial: attribute.field.to_partial_path("index"), locals: { field: attribute.field, record: object, resource: associated_resource } %></td>
+          <% end %>
+
+          <td class="actions">
+            <%= link_to t("madmin.actions.view"), associated_resource.show_path(object), class: "btn btn-secondary" %>
+            <%= link_to t("madmin.actions.edit"), associated_resource.edit_path(object), class: "btn btn-secondary" unless associated_resource.readonly? %>
+
+            <% associated_resource.collection_member_actions.each do |action| %>
+              <%= instance_exec(object, &action) %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%= render "pagination", page: page %>

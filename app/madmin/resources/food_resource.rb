@@ -1,4 +1,6 @@
 class FoodResource < Madmin::Resource
+  menu position: 2
+
   attribute :id, form: false, index: false
   attribute :name
   attribute :category, index: true

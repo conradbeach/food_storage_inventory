@@ -17,7 +17,7 @@ RSpec.describe InventoryImport do
     it "imports items with amounts and conservative expiration dates" do
       described_class.new(directory).run
 
-      expect(Food.find_by!(name: "Wheat").items.order(:id).pluck(:description, :amount, :expires_on)).to eq(
+      expect(Food.find_by!(name: "Wheat").items.reorder(:id).pluck(:description, :amount, :expires_on)).to eq(
         [
           ["Hard Red", 45, Date.new(2039, 1, 1)],
           ["Hard White", 1045, Date.new(2027, 8, 1)],
@@ -29,7 +29,7 @@ RSpec.describe InventoryImport do
     it "names items from their sub-table when combining several into one food" do
       described_class.new(directory).run
 
-      expect(Food.find_by!(name: "Legumes").items.order(:id).pluck(:description))
+      expect(Food.find_by!(name: "Legumes").items.reorder(:id).pluck(:description))
         .to eq(["Black Beans", "White Beans", "White Beans: Great Northern Beans"])
     end
 
