@@ -71,14 +71,11 @@ deploy:
   server: home-server                      # SSH host for Kamal
   ssh_user: conrad
   host: home-server.example.ts.net         # the app's Tailscale HTTPS name
-litestream:       # optional until backups are set up (see Backups)
-  host: 100.x.y.z:22                       # backup machine's Tailscale IP
-  user: litestream
-  path: /food_storage_inventory            # inside the backup machine's /srv/litestream
-  host_key: ssh-ed25519 AAAA...
-  ssh_private_key: |
-    -----BEGIN OPENSSH PRIVATE KEY-----
-    ...
+litestream:       # Cloudflare R2 backups; optional until set up (see Backups)
+  endpoint: https://<account id>.r2.cloudflarestorage.com
+  bucket: food-storage-inventory
+  access_key_id: ...
+  secret_access_key: ...
 ```
 
 Kamal reads them through `.kamal/credentials.rb` when it renders
@@ -135,47 +132,64 @@ next day.
 
 ## Backups
 
-[Litestream](https://litestream.io) runs as a Kamal accessory next to the app.
-It continuously copies changes to `storage/production.sqlite3` over SFTP to
-another machine on the tailnet, takes a full snapshot daily, and keeps 30 days
-of history (`config/litestream/litestream.yml.erb`), so the database can be
+[Litestream](https://litestream.io) runs as a Kamal accessory next to the app
+and continuously copies changes to `storage/production.sqlite3` to the
+`food-storage-inventory` bucket in Cloudflare R2 (the Cloudflare dashboard,
+under R2 Object Storage). It takes a full snapshot daily and keeps 30 days of
+history (`config/litestream/litestream.yml.erb`), so the database can be
 restored to any point in that window. The cache, queue, and cable databases
-aren't backed up because their data is disposable. The accessory is only
-configured once the `litestream` credentials exist.
+aren't backed up because their data is disposable.
 
-The backup machine doesn't need to be always on. While it's unreachable,
-Litestream keeps changes on the home server and retries at least once a minute;
-it uploads them as soon as the machine is back on the tailnet. Changes made
-since its last connection are at risk only if the home server fails meanwhile.
+This fits in R2's free tier (10 GB of storage and 1 million write requests a
+month); the database is a few megabytes. The accessory is only configured once
+the `litestream` credentials exist.
 
-Setup:
+### Setup
 
-1. Generate a key pair just for backups, and add the `litestream` credentials
-   (see Credentials) with the private key and the backup machine's Tailscale IP
-   as the host. Use the IP rather than its Tailscale name, which Docker
-   containers may not be able to resolve.
-2. On the backup machine (Linux with systemd and OpenSSH), run
-   `script/setup_backup_machine`, which creates an SFTP-only `litestream` user
-   jailed to `/srv/litestream`, limits SSH logins to that user from the home
-   server, allows it through ufw, and prints the machine's host key:
+1. In the Cloudflare dashboard, open R2 Object Storage and create a bucket named
+   `food-storage-inventory` (Standard storage class; the free tier doesn't
+   cover Infrequent Access).
+2. Under R2 → **Manage API tokens**, create an Account API token with **Object
+   Read & Write** permission for that bucket only and no expiration.
+3. Add its access key ID and secret access key, the bucket name, and the
+   S3 endpoint shown with the token to the `litestream` credentials.
+4. `bin/kamal accessory boot litestream` (or `bin/kamal setup` on a new
+   server), then check `bin/kamal accessory logs litestream` for errors.
+
+### Restoring onto a new server
+
+If the home server dies, the backup comes back automatically: the Litestream
+accessory restores the latest backup whenever the server has no database
+(`config/litestream/start.sh`). On the replacement server:
+
+1. Put the new server on the tailnet with SSH access (Kamal installs Docker), and
+   set up Tailscale Serve as in [First deploy](#first-deploy).
+2. Point `deploy.server` (and `deploy.host` if the name changed) in the
+   credentials at it.
+3. Boot Litestream before the app, so the app doesn't create an empty database
+   first:
    ```sh
-   sudo script/setup_backup_machine "<litestream public key>" <home server Tailscale IP>
+   bin/kamal server bootstrap
+   bin/kamal accessory boot litestream
+   bin/kamal accessory logs litestream   # look for the restore, then "replicating to"
+   bin/kamal deploy
    ```
-3. Add the printed host key as `litestream.host_key`.
-4. `bin/kamal accessory boot litestream` and check
-   `bin/kamal accessory logs litestream` for a successful sync.
 
-Do a practice restore once backups are running.
+Phones need to re-enable notifications if the app's URL changed.
 
-### Restoring
+### Restoring an earlier point in time
+
+To roll the existing server back, for example after a bad edit, restore into a
+new file, swap it in, and clear Litestream's local state so it snapshots the
+rolled-back database:
 
 ```sh
 bin/kamal app stop
-bin/kamal accessory exec litestream "litestream restore -o /rails/storage/restored.sqlite3 /rails/storage/production.sqlite3"
-bin/kamal accessory exec litestream "sh -c 'mv /rails/storage/restored.sqlite3 /rails/storage/production.sqlite3 && rm -f /rails/storage/production.sqlite3-wal /rails/storage/production.sqlite3-shm'"
-bin/kamal accessory reboot litestream
+bin/kamal accessory stop litestream
+bin/kamal accessory exec litestream "-c 'cd /rails/storage && litestream restore -timestamp 2026-10-01T00:00:00Z -o restored.sqlite3 /rails/storage/production.sqlite3 && rm -rf production.sqlite3-wal production.sqlite3-shm .production.sqlite3-litestream && mv restored.sqlite3 production.sqlite3 && chown 1000:1000 production.sqlite3'"
+bin/kamal accessory start litestream
 bin/kamal app boot
 ```
 
-Add `-timestamp 2026-10-01T00:00:00Z` to the restore command to restore an
-earlier point in time.
+The accessory's entrypoint is `/bin/sh`, hence the `-c`. Leave out `-timestamp`
+to restore the latest backup.

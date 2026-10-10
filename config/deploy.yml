@@ -51,17 +51,18 @@ builder:
 
 <% if KAMAL_CREDENTIALS.litestream %>
 accessories:
-  # Continuously replicates the production database over SFTP to another
-  # machine on the tailnet, keeping daily snapshots for 30 days.
+  # Continuously replicates the production database to Cloudflare R2, keeping
+  # daily snapshots for 30 days. On a server without a database, it first
+  # restores the latest backup (config/litestream/start.sh).
   litestream:
     image: litestream/litestream:0.5.17
     host: <%= KAMAL_CREDENTIALS.dig(:deploy, :server) %>
-    cmd: replicate
+    cmd: /etc/litestream/start.sh
+    options:
+      entrypoint: /bin/sh
     files:
       - config/litestream/litestream.yml.erb:/etc/litestream.yml
-      - local: config/litestream/id_ed25519.erb
-        remote: /etc/litestream/id_ed25519
-        mode: "0600"
+      - config/litestream/start.sh:/etc/litestream/start.sh
     volumes:
       - "food_storage_inventory_storage:/rails/storage"
 <% end %>
