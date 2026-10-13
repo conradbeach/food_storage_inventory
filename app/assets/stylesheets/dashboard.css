@@ -1,0 +1,4 @@
+/* Foods with less on hand than their storage target. */
+#supply-summary tr.below-target td {
+  background-color: light-dark(rgb(254 243 199), rgb(120 53 15 / 0.4));
+}

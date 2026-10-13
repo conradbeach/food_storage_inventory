@@ -58,7 +58,7 @@
           <th>Food</th>
           <th>On Hand</th>
           <th>Per Person / Year</th>
-          <th>Years Supplied</th>
+          <th>Supply Target</th>
           <th>Needed</th>
           <th>Packages to Buy</th>
           <th>Estimated Cost</th>
@@ -66,11 +66,17 @@
       </thead>
       <tbody>
         <% @foods.each do |food| %>
-          <tr>
+          <tr <%= tag.attributes(class: ("below-target" if food.below_target?(@household_size))) %>>
             <td><%= link_to food.name, madmin_food_path(food) %></td>
             <td><%= format_amount(food.total_amount) %> <%= food.unit %></td>
             <td><%= format_amount(food.yearly_amount_per_person) %></td>
-            <td><%= format_amount(food.years_supplied(@household_size)) %></td>
+            <td>
+              <% if (percent = food.percent_of_target(@household_size)) %>
+                <%= number_to_percentage(percent, precision: 0) %> of <%= format_months(food.target_months) %>
+              <% else %>
+                —
+              <% end %>
+            </td>
             <td><%= format_amount(food.amount_needed(@household_size)) %></td>
             <td><%= format_amount(food.packages_needed(@household_size)) %></td>
             <td><%= number_to_currency(food.estimated_cost(@household_size)) || "—" %></td>

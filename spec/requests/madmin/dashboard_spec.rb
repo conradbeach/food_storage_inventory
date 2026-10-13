@@ -33,7 +33,21 @@ RSpec.describe "Admin dashboard" do
 
       summary_section = response.body[%r{<section id="supply-summary">.*?</section>}m]
       expect(summary_section).to include("Household size: 2 adults")
-      expect(summary_section).to include("<td>3 lbs</td>", "<td>0.25</td>", "<td>9</td>", "<td>5</td>", "$42.90")
+      expect(summary_section).to include("<td>3 lbs</td>", "25% of 1 year", "<td>9</td>", "<td>5</td>", "$42.90")
+    end
+
+    it "highlights foods below their storage target, measured in their target months" do
+      create(:person, calories_per_day: 2000)
+      create(:item, food: create(:food, name: "Butter", yearly_amount_per_person: 6), amount: 3)
+      three_months = create(:food, name: "Long Term Food", yearly_amount_per_person: 730_000, target_months: 3)
+      create(:item, food: three_months, amount: 182_500)
+
+      get madmin_root_path
+
+      rows = response.parsed_body.css("#supply-summary tbody tr").index_by { it.css("td").first.text.strip }
+      expect(rows["Butter"]["class"]).to eq("below-target")
+      expect(rows["Long Term Food"]["class"]).to be_nil
+      expect(rows["Long Term Food"].text.squish).to include("100% of 3 months")
     end
 
     context "when nothing is expiring soon" do
