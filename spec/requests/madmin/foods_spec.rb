@@ -84,9 +84,20 @@ RSpec.describe "Admin foods" do
     it "updates the food" do
       food = create(:food)
 
-      patch madmin_food_path(food), params: { food: { package_price: "7.67" } }
+      patch madmin_food_path(food), params: { food: { package_price: "7.67", target_months: "3" } }
 
-      expect(food.reload.package_price).to eq(7.67)
+      expect(food.reload).to have_attributes(package_price: 7.67, target_months: 3)
+    end
+
+    context "when the target months aren't a positive number" do
+      it "rejects the change" do
+        food = create(:food)
+
+        patch madmin_food_path(food), params: { food: { target_months: "0" } }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(food.reload.target_months).to eq(12)
+      end
     end
   end
 

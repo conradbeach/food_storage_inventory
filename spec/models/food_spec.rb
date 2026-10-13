@@ -12,13 +12,22 @@ RSpec.describe Food do
     end
   end
 
-  describe "#years_supplied" do
+  describe "#percent_of_target" do
     context "when the food has a yearly target" do
-      it "divides the total amount by the household's yearly need" do
-        food = create(:food, yearly_amount_per_person: 132)
+      it "divides the total amount by the household's need for the target months" do
+        food = create(:food, yearly_amount_per_person: 132, target_months: 12)
         create(:item, food:, amount: 834)
 
-        expect(food.years_supplied(5.1).round(2)).to eq(1.24)
+        expect(food.percent_of_target(5.1).round).to eq(124)
+      end
+    end
+
+    context "when the target is shorter than a year" do
+      it "measures against that many months of need" do
+        food = create(:food, yearly_amount_per_person: 730_000, target_months: 3)
+        create(:item, food:, amount: 912_500)
+
+        expect(food.percent_of_target(5)).to eq(100)
       end
     end
 
@@ -26,7 +35,7 @@ RSpec.describe Food do
       it "returns nil" do
         food = create(:food, yearly_amount_per_person: nil)
 
-        expect(food.years_supplied(5.1)).to be_nil
+        expect(food.percent_of_target(5.1)).to be_nil
       end
     end
 
@@ -34,7 +43,35 @@ RSpec.describe Food do
       it "returns nil" do
         food = create(:food, yearly_amount_per_person: 132)
 
-        expect(food.years_supplied(0)).to be_nil
+        expect(food.percent_of_target(0)).to be_nil
+      end
+    end
+  end
+
+  describe "#below_target?" do
+    context "when less than the target is on hand" do
+      it "returns true" do
+        food = create(:food, yearly_amount_per_person: 6)
+        create(:item, food:, amount: 11)
+
+        expect(food.below_target?(2)).to be(true)
+      end
+    end
+
+    context "when the target is met" do
+      it "returns false" do
+        food = create(:food, yearly_amount_per_person: 6)
+        create(:item, food:, amount: 12)
+
+        expect(food.below_target?(2)).to be(false)
+      end
+    end
+
+    context "when the food has no yearly target" do
+      it "returns false" do
+        food = create(:food, yearly_amount_per_person: nil)
+
+        expect(food.below_target?(2)).to be(false)
       end
     end
   end
@@ -55,6 +92,15 @@ RSpec.describe Food do
         create(:item, food:, amount: 834)
 
         expect(food.amount_needed(5.1)).to eq(0)
+      end
+    end
+
+    context "when the target is shorter than a year" do
+      it "returns the shortfall for that many months" do
+        food = create(:food, yearly_amount_per_person: 730_000, target_months: 3)
+        create(:item, food:, amount: 500_000)
+
+        expect(food.amount_needed(5)).to eq(412_500)
       end
     end
 

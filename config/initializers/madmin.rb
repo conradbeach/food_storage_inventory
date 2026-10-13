@@ -1,4 +1,5 @@
 Madmin.site_name = "Food Storage"
+Madmin.stylesheets << "dashboard"
 
 Rails.application.config.to_prepare do
   Madmin.menu.before_render do
