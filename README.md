@@ -79,13 +79,15 @@ Settings that shouldn't be in this public repository live in Rails credentials
 
 ```yaml
 vapid:            # push notification keys; changing them breaks every phone's subscription
-  subject: https://home-server.example.ts.net
+  subject: https://food-storage.example.ts.net
   public_key: ...
   private_key: ...
 deploy:
   server: home-server                      # SSH host for Kamal
   ssh_user: conrad
-  host: home-server.example.ts.net         # the app's Tailscale HTTPS name
+  host: food-storage.example.ts.net        # the app's Tailscale HTTPS name; its first part names the Tailscale node
+tailscale:
+  auth_key: tskey-auth-...                 # only needed the first time the tailscale accessory boots
 litestream:       # Cloudflare R2 backups; optional until set up (see Backups)
   endpoint: https://<account id>.r2.cloudflarestorage.com
   bucket: food-storage-inventory
@@ -94,35 +96,38 @@ litestream:       # Cloudflare R2 backups; optional until set up (see Backups)
 ```
 
 Kamal reads them through `.kamal/credentials.rb` when it renders
-`config/deploy.yml` and the Litestream config, without booting Rails.
+`config/deploy.yml`, `.kamal/secrets`, and the Litestream config, without
+booting Rails.
 
 ## Deployment
 
 The app deploys with [Kamal](https://kamal-deploy.org) to the home server, which
 is only reachable over Tailscale:
 
-- kamal-proxy listens on `127.0.0.1:8380`, not ports 80/443, so it doesn't
-  collide with other services. kamal-proxy is shared by every Kamal app on a
-  server; if another Kamal app is added there, keep their proxy settings in sync.
-- [Tailscale Serve](https://tailscale.com/kb/1242/tailscale-serve) provides
-  HTTPS with a `*.ts.net` certificate. HTTPS is required for installing the PWA
-  and for push notifications.
+- The `tailscale` accessory is a Tailscale node of its own (named after the
+  first part of `deploy.host`) that provides HTTPS with a `*.ts.net`
+  certificate and forwards to kamal-proxy. HTTPS is required for installing the
+  PWA and for push notifications, and a separate name keeps the app's cookies
+  and service worker apart from other apps on the server.
+- kamal-proxy listens on `127.0.0.1:8380` and routes by host name. It's shared
+  by every Kamal app on the server (Obsidian Reminders runs there too); keep
+  their proxy settings in sync.
 - Kamal runs a local registry and tunnels it over SSH, so no Docker Hub account
   is needed.
 
 ### First deploy
 
-1. Enable HTTPS certificates for the tailnet (Tailscale admin console → DNS),
-   then on the home server:
-   ```sh
-   sudo tailscale serve --bg --https=443 http://127.0.0.1:8380
-   ```
+1. In the Tailscale admin console, make sure HTTPS certificates are enabled
+   (DNS → HTTPS Certificates), then create an auth key (Settings → Keys →
+   Generate auth key; one-off is fine) and put it in the `tailscale` credentials.
 2. Deploy and create a user:
    ```sh
    bin/kamal setup
    bin/kamal console   # User.create!(email_address: ..., password: ...)
    ```
-3. Import the spreadsheet into production:
+3. In the admin console's Machines list, open the new `food-storage` machine
+   and **Disable key expiry**, so it doesn't drop off the tailnet in six months.
+4. Import the spreadsheet into production:
    ```sh
    scp -r path/to/csv_directory home-server:/tmp/inventory_export
    ssh home-server 'docker cp /tmp/inventory_export $(docker ps -q -f label=service=food_storage_inventory -f label=role=web):/rails/tmp/'
@@ -136,7 +141,7 @@ After that, `bin/kamal deploy` deploys new versions.
 iOS only allows push notifications for web apps added to the Home Screen
 (iOS 16.4 or later):
 
-1. Open the app's `https://home-server.<tailnet>.ts.net` URL in Safari and sign in.
+1. Open the app's `https://food-storage.<tailnet>.ts.net` URL in Safari and sign in.
 2. Share → **Add to Home Screen**.
 3. Open Food Storage from the Home Screen and tap **Notify me about expiring
    items** on the dashboard.
@@ -177,10 +182,11 @@ If the home server dies, the backup comes back automatically: the Litestream
 accessory restores the latest backup whenever the server has no database
 (`config/litestream/start.sh`). On the replacement server:
 
-1. Put the new server on the tailnet with SSH access (Kamal installs Docker), and
-   set up Tailscale Serve as in [First deploy](#first-deploy).
-2. Point `deploy.server` (and `deploy.host` if the name changed) in the
-   credentials at it.
+1. Put the new server on the tailnet with SSH access (Kamal installs Docker).
+2. Point `deploy.server` in the credentials at it, and put a new auth key in the
+   `tailscale` credentials, since the old node's state stays on the dead server.
+   Delete the old `food-storage` machine in the Tailscale admin console first,
+   so the new one gets the same name.
 3. Boot Litestream before the app, so the app doesn't create an empty database
    first:
    ```sh
@@ -188,6 +194,7 @@ accessory restores the latest backup whenever the server has no database
    bin/kamal accessory boot litestream
    bin/kamal accessory logs litestream   # look for the restore, then "replicating to"
    bin/kamal deploy
+   bin/kamal accessory boot tailscale
    ```
 
 Phones need to re-enable notifications if the app's URL changed.
