@@ -69,8 +69,9 @@ bin/ci
 bin/kamal deploy
 ```
 
-Also bump the Litestream image version in `config/deploy.yml` now and then,
-reading its release notes first, then run `bin/kamal accessory reboot litestream`.
+Also bump the Litestream and Tailscale image versions in `config/deploy.yml` now
+and then, reading their release notes first, then run
+`bin/kamal accessory reboot <name>`.
 
 ## Credentials
 
