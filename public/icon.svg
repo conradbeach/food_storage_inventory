@@ -1,33 +1,57 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Food Storage</title>
+  <desc>Three cream pantry jars and cans on a brown shelf against a warm honey background.</desc>
   <defs>
-    <linearGradient id="tin" x1="0" x2="1">
-      <stop offset="0" stop-color="#9ca3af"/>
-      <stop offset="0.35" stop-color="#f9fafb"/>
-      <stop offset="1" stop-color="#6b7280"/>
+    <linearGradient id="background" x1="64" y1="0" x2="448" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F4CE7B"/>
+      <stop offset="1" stop-color="#CB8735"/>
     </linearGradient>
-    <linearGradient id="label" x1="0" x2="1">
-      <stop offset="0" stop-color="#c2410c"/>
-      <stop offset="0.35" stop-color="#fb923c"/>
-      <stop offset="1" stop-color="#9a3412"/>
+    <linearGradient id="cream" x1="0" y1="150" x2="0" y2="320" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF8E7"/>
+      <stop offset="1" stop-color="#F3E3BF"/>
     </linearGradient>
-    <g id="can">
-      <path d="M0 16V150A72 13 0 0 0 144 150V16Z" fill="url(#tin)"/>
-      <g fill="none" stroke="#6b7280" stroke-opacity="0.45" stroke-width="3">
-        <path d="M0 34A72 13 0 0 0 144 34"/>
-        <path d="M0 46A72 13 0 0 0 144 46"/>
-        <path d="M0 132A72 13 0 0 0 144 132"/>
-        <path d="M0 144A72 13 0 0 0 144 144"/>
-      </g>
-      <path d="M0 58A72 13 0 0 0 144 58V118A72 13 0 0 1 0 118Z" fill="url(#label)"/>
-      <path d="M48 84h48" stroke="#ffffff" stroke-opacity="0.8" stroke-width="8" stroke-linecap="round"/>
-      <ellipse cx="72" cy="16" rx="72" ry="16" fill="#d1d5db"/>
-      <ellipse cx="72" cy="16" rx="62" ry="12" fill="#e5e7eb"/>
-    </g>
+    <linearGradient id="wood" x1="0" y1="318" x2="0" y2="368" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#795033"/>
+      <stop offset="1" stop-color="#62402D"/>
+    </linearGradient>
   </defs>
-  <rect width="512" height="512" fill="#4f46e5"/>
-  <g transform="translate(256 256) scale(0.9) translate(-256 -256)">
-    <use xlink:href="#can" x="104" y="257"/>
-    <use xlink:href="#can" x="264" y="257"/>
-    <use xlink:href="#can" x="184" y="91"/>
+
+  <!-- Opaque full-bleed background; all foreground geometry fits the maskable safe circle. -->
+  <path fill="url(#background)" d="M0 0h512v512H0z"/>
+
+  <!-- A small downward offset provides depth without blurred edges. -->
+  <g fill="#925A28" opacity=".16" transform="translate(0 7)">
+    <path d="M132 188h60v17c0 8 10 10 10 24v74c0 11-8 19-19 19h-42c-11 0-19-8-19-19v-74c0-14 10-16 10-24z"/>
+    <rect x="220" y="151" width="82" height="171" rx="13"/>
+    <path d="M328 210h48v15c0 7 10 10 10 22v56c0 11-8 19-19 19h-30c-11 0-19-8-19-19v-56c0-12 10-15 10-22z"/>
+    <rect x="104" y="318" width="304" height="25" rx="8"/>
+    <rect x="138" y="334" width="22" height="33" rx="6"/>
+    <rect x="352" y="334" width="22" height="33" rx="6"/>
   </g>
+
+  <!-- Squat glass jar, drawn with a broad inset of golden contents. -->
+  <path fill="url(#cream)" d="M132 195h60v10c0 8 10 10 10 24v70c0 11-8 19-19 19h-42c-11 0-19-8-19-19v-70c0-14 10-16 10-24z"/>
+  <path fill="#C88E40" d="M134 242h56v54c0 6-4 10-10 10h-36c-6 0-10-4-10-10z"/>
+  <rect x="128" y="182" width="68" height="22" rx="7" fill="#795033"/>
+  <path d="M136 187h52" stroke="#9B7049" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Tall storage can: wide label and substantial rims survive small sizes. -->
+  <rect x="220" y="151" width="82" height="167" rx="13" fill="url(#cream)"/>
+  <path fill="#A86A32" d="M220 211h82v64h-82z"/>
+  <ellipse cx="261" cy="161" rx="33" ry="5" fill="#DDC79B"/>
+  <path d="M230 305q31 6 62 0" fill="none" stroke="#DDC79B" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- A shorter jar completes the stepped rhythm. -->
+  <path fill="url(#cream)" d="M328 216h48v9c0 7 10 10 10 22v52c0 11-8 19-19 19h-30c-11 0-19-8-19-19v-52c0-12 10-15 10-22z"/>
+  <path fill="#A86A32" d="M330 258h44v38c0 6-4 10-10 10h-24c-6 0-10-4-10-10z"/>
+  <rect x="324" y="203" width="56" height="22" rx="7" fill="#795033"/>
+  <path d="M332 208h40" stroke="#9B7049" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- One substantial shelf with two understated supports. -->
+  <g fill="url(#wood)">
+    <rect x="138" y="330" width="22" height="37" rx="6"/>
+    <rect x="352" y="330" width="22" height="37" rx="6"/>
+    <rect x="104" y="318" width="304" height="25" rx="8"/>
+  </g>
+  <path d="M113 321h286" stroke="#A0784A" stroke-width="4" stroke-linecap="round"/>
 </svg>
