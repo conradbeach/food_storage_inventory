@@ -31,9 +31,10 @@ RSpec.describe "Admin dashboard" do
 
       get madmin_root_path
 
-      summary_section = response.body[%r{<section id="supply-summary">.*?</section>}m]
-      expect(summary_section).to include("Household size: 2 adults")
-      expect(summary_section).to include("<td>3 lbs</td>", "25% of 1 year", "<td>9</td>", "<td>5</td>", "$42.90")
+      summary = response.parsed_body.css("#supply-summary")
+      expect(summary.text.squish).to include("Household size: 2 adults")
+      expect(summary.css("th").map { it.text.strip }).to eq(["Food", "Supply Target", "Needed", "Estimated Cost"])
+      expect(summary.css("tbody td").map { it.text.squish }).to eq(["Butter", "25% of 1 year", "9 lbs", "$42.90"])
     end
 
     it "highlights foods below their storage target, measured in their target months" do

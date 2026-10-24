@@ -2,3 +2,8 @@
 #supply-summary tr.below-target td {
   background-color: light-dark(rgb(254 243 199), rgb(120 53 15 / 0.4));
 }
+
+/* Wrap long food names so the table needs less sideways scrolling on a phone. */
+#supply-summary td:first-child {
+  white-space: normal;
+}
