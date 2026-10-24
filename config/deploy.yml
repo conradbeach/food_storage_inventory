@@ -55,7 +55,7 @@ accessories:
   # with other apps on the server. Host networking lets it reach kamal-proxy
   # on localhost.
   tailscale:
-    image: tailscale/tailscale:v1.102.5
+    image: tailscale/tailscale:v1.104.2
     host: <%= KAMAL_CREDENTIALS.dig(:deploy, :server) %>
     network: host
     env:
